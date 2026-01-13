@@ -1,0 +1,18 @@
+:concurrency: 3
+:timeout: 60
+:verbose: true
+:queues:
+  - critical
+  - default
+  - mailers
+  - active_storage_analysis
+  - active_storage_purge
+
+
+:scheduler:
+  :schedule:
+    cleanup_abandoned_carts:
+      cron: '0 * * * *'
+      class: MarkCartAsAbandonedJob
+      enabled: true
+      description: "Verifica e limpa carrinhos abandonados (3h e 7d)"
