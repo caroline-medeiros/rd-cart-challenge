@@ -108,13 +108,13 @@ Carrinho
 
 ------------------------------------------------------------------------
 
-## Tecnologias e Decisões Técnicas
+## Stack
 
 * **Ruby 3.3.1 / Rails 7.1.3**
-* **PostgreSQL 16**: Banco de dados relacional.
-* **Redis 7**: Armazenamento para processamento de filas e cache.
-* **Sidekiq + Sidekiq Scheduler**: Escolhido para o processamento de background jobs devido à sua robustez e facilidade de monitoramento via Web UI.
-* **Docker & Docker Compose**: O ambiente foi totalmente containerizado para garantir consistência entre desenvolvimento e teste.
+* **PostgreSQL 16**
+* **Redis 7**
+* **Sidekiq + Sidekiq Scheduler**
+* **Docker & Docker Compose**
 
 ### Destaques da Implementação
 * **Performance:** Utilização de `update_all` e `destroy_all` nos Jobs para otimizar operações em lote no banco de dados. No payload do carrinho, foi utilizado `.includes(:product)` para prevenir consultas N+1.
