@@ -1,4 +1,5 @@
-# Desafio técnico e-commerce
+# Tech interview backend entry level main
+## RD Station Cart Challenge API
 
 API REST desenvolvida em Ruby on Rails para gerenciamento de carrinho de compras de um e-commerce, com suporte a background jobs para limpeza automática de carrinhos abandonados.
 
@@ -25,8 +26,6 @@ Após o setup, inicie a API e o Sidekiq:
 ```bash
 make server
 ````
-
-A API estará disponível em: http://localhost:3000
 
 ### 3. Rodando os Testes
 A suíte de testes utiliza RSpec.
@@ -80,7 +79,7 @@ automaticamente a cada hora para:
 Você pode visualizar o agendamento e a execução dos Jobs através do
 painel do Sidekiq:
 
--   **Dashboard:** http://localhost:3000/sidekiq\
+-   **Dashboard:** http://localhost:3000/sidekiq
 -   **Agendamento (Cron):** http://localhost:3000/sidekiq/recurring-jobs
 
 ------------------------------------------------------------------------
@@ -95,6 +94,59 @@ Carrinho
 | POST   | `/cart/add_item`    | Incrementa a quantidade de um item existente.                  |
 | DELETE | `/cart/:product_id` | Remove um item do carrinho.                                    |
 
+
+### Guia de Testes Manuais (cURL)
+Esta API utiliza sessões (session[:cart_id]), portanto os exemplos abaixo utilizam cookies.txt para manter a persistência entre requisições.
+
+Importante: Caso os IDs do seu banco sejam diferentes de 1, 2 ou 3 (devido a testes anteriores), você pode resetar o banco (docker-compose run --rm web bin/rails db:migrate:reset db:seed) ou consultar a lista atualizada abaixo.
+
+#### 0. Consultar IDs dos Produtos
+Antes de começar, liste os produtos disponíveis no banco para confirmar quais IDs utilizar:
+
+```bash
+docker-compose run --rm web bin/rails runner "puts Product.all.pluck(:id, :name).map { |p| p.join(' - ') }"
+````
+
+#### 1. Adicionar Item ao Carrinho
+Adiciona o produto ID 1 (ajuste conforme a lista acima) ao carrinho.
+
+```bash
+curl -i -c cookies.txt -H "Content-Type: application/json" \
+  -X POST -d '{"product_id": 1, "quantity": 1}' \
+  http://localhost:3000/cart
+```
+
+#### 2. Consultar Carrinho
+Recupera o carrinho atual enviando o cookie da sessão.
+
+```bash
+curl -i -b cookies.txt -H "Content-Type: application/json" \
+  http://localhost:3000/cart
+````
+
+#### 3. Adicionar Outro Item
+Adiciona o produto ID 2 ao mesmo carrinho.
+
+```bash
+curl -i -b cookies.txt -c cookies.txt -H "Content-Type: application/json" \
+  -X POST -d '{"product_id": 2, "quantity": 3}' \
+  http://localhost:3000/cart/add_item
+````
+
+#### 4. Remover Item
+Remove o produto ID 1 do carrinho.
+
+```bash
+curl -i -b cookies.txt -c cookies.txt -H "Content-Type: application/json" \
+  -X DELETE \
+  http://localhost:3000/cart/1
+````
+
+#### 5. Monitoramento (Sidekiq)
+Acesse o painel para visualizar os Jobs em execução:
+
+URL: http://localhost:3000/sidekiq
+
 ## Exemplo de Payload (Adicionar Item)
 
 **POST /cart**
@@ -106,19 +158,3 @@ Carrinho
 }
 ```
 
-------------------------------------------------------------------------
-
-## Stack
-
-* **Ruby 3.3.1 / Rails 7.1.3**
-* **PostgreSQL 16**
-* **Redis 7**
-* **Sidekiq + Sidekiq Scheduler**
-* **Docker & Docker Compose**
-
-### Destaques da Implementação
-* **Performance:** Utilização de `update_all` e `destroy_all` nos Jobs para otimizar operações em lote no banco de dados. No payload do carrinho, foi utilizado `.includes(:product)` para prevenir consultas N+1.
-* **Arquitetura:** Lógica de negócio encapsulada no Model (`Cart`), mantendo o Controller ("Skinny Controller") responsável apenas pela orquestração HTTP.
-* **Idempotência:** O arquivo `seeds.rb` e os métodos de criação utilizam `find_or_create_by` para garantir que scripts possam ser reexecutados sem duplicar dados.
-
----
